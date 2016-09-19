@@ -1,63 +1,94 @@
-function [t,n,b]=frenet(x,y,z)
+function [T,N,B,k,t] = frenet(x,y,z),
+% FRENET - Frenet-Serret Space Curve Invarients
+%   
+%   [T,N,B,k,t] = frenet(x,y);
+%   [T,N,B,k,t] = frenet(x,y,z);
+% 
+%   Returns the 3 vector and 2 scaler invarients of a space curve defined
+%   by vectors x,y and z.  If z is omitted then the curve is only a 2D,
+%   but the equations are still valid.
+% 
+%    _    r'
+%    T = ----  (Tangent)
+%        |r'|
+% 
+%    _    T'
+%    N = ----  (Normal)
+%        |T'|
+%    _   _   _
+%    B = T x N (Binormal)
+% 
+%    k = |T'|  (Curvature)
+% 
+%    t = dot(-B',N) (Torsion)
+% 
+% 
+%    Example:
+%    theta = 2*pi*linspace(0,2,100);
+%    x = cos(theta);
+%    y = sin(theta);
+%    z = theta/(2*pi);
+%    [T,N,B,k,t] = frenet(x,y,z);
+%    line(x,y,z), hold on
+%    quiver3(x,y,z,T(:,1),T(:,2),T(:,3),'color','r')
+%    quiver3(x,y,z,N(:,1),N(:,2),N(:,3),'color','g')
+%    quiver3(x,y,z,B(:,1),B(:,2),B(:,3),'color','b')
+%    legend('Curve','Tangent','Normal','Binormal')
+% 
+% 
+% See also: GRADIENT
 
-% FRENET Calculate the Frenet frame for a polygonal space curve
-% [t,n,b]=frenet(x,y,z) returns the tangent unit vector, the normal
-% and binormal of the space curve x,y,z. The curve may be a row or
-% column vector, the frame vectors are each row vectors. 
-%
-% If two points coincide, the previous tangent and normal will be used.
-%
-% Written by Anders Sandberg, asa@nada.kth.se, 2005
-
-N=size(x,1);
-if (N==1)
-  x=x';
-  y=y';
-  z=z';
-  N=size(x,1);
+if nargin == 2,
+    z = zeros(size(x));
 end
 
-t=zeros(N,3);
-b=zeros(N,3);
-n=zeros(N,3);
+% CONVERT TO COLUMN VECTOR
+x = x(:);
+y = y(:);
+z = z(:);
 
-p=[x y z];
+% SPEED OF CURVE
+dx = gradient(x);
+dy = gradient(y);
+dz = gradient(z);
+dr = [dx dy dz];
 
-for i=2:(N-1)
-  t(i,:)=(p(i+1,:)-p(i-1,:));
-  tl=norm(t(i,:));
-  if (tl>0)
-    t(i,:)=t(i,:)/tl;
-  else
-    t(i,:)=t(i-1,:);
-  end
-end
-
-t(1,:)=p(2,:)-p(1,:);
-t(1,:)=t(1,:)/norm(t(1,:));
-
-t(N,:)=p(N,:)-p(N-1,:);
-t(N,:)=t(N,:)/norm(t(N,:));
-
-for i=2:(N-1)
-  n(i,:)=(t(i+1,:)-t(i-1,:));
-  nl=norm(n(i,:));
-  if (nl>0)
-    n(i,:)=n(i,:)/nl;
-  else
-    n(i,:)=n(i-1,:);
-  end
-end
-
-n(1,:)=t(2,:)-t(1,:);
-n(1,:)=n(1,:)/norm(n(1,:));
-
-n(N,:)=t(N,:)-t(N-1,:);
-n(N,:)=n(N,:)/norm(n(N,:));
-
-for i=1:N
-  b(i,:)=cross(t(i,:),n(i,:));
-  b(i,:)=b(i,:)/norm(b(i,:));
-end
+ddx = gradient(dx);
+ddy = gradient(dy);
+ddz = gradient(dz);
+ddr = [ddx ddy ddz];
 
 
+
+% TANGENT
+T = dr./mag(dr,3);
+
+
+% DERIVIATIVE OF TANGENT
+dTx =  gradient(T(:,1));
+dTy =  gradient(T(:,2));
+dTz =  gradient(T(:,3));
+
+dT = [dTx dTy dTz];
+
+
+% NORMAL
+N = dT./mag(dT,3);
+% BINORMAL
+B = cross(T,N);
+% CURVATURE
+% k = mag(dT,1);
+k = mag(cross(dr,ddr),1)./((mag(dr,1)).^3);
+% TORSION
+t = dot(-B,N,2);
+
+
+
+
+function N = mag(T,n),
+% MAGNATUDE OF A VECTOR (Nx3)
+%  M = mag(U)
+N = sum(abs(T).^2,2).^(1/2);
+d = find(N==0); 
+N(d) = eps*ones(size(d));
+N = N(:,ones(n,1));
