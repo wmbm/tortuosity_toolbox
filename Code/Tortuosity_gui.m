@@ -59,7 +59,7 @@ function Tortuosity_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 
 handles.data = zeros(512,512,512);
 handles.data_thresh_smooth = zeros(512,512,512);
-handles.data_table = zeros(6,3);
+handles.data_table = zeros(7,3);
 handles.XL = [0 512];    % X Zoom Limit
 handles.YL = [0 512];    % Y Zoom Limit
 handles.output = hObject;
@@ -117,6 +117,7 @@ function centreline_button_Callback(hObject, eventdata, handles)
 XL=round(handles.XL);
 YL=round(handles.YL);
 
+assignin('base','zvals',[handles.Z_min,handles.Z_max]);
 % Skeletization of vessel to extract centreline (Skeleton3d)
 start = handles.data_thresh_smooth(YL(1):YL(2),XL(1):XL(2),handles.Z_min:handles.Z_max);
 
@@ -171,7 +172,7 @@ grid on
 handles.fixed = fixed_xyz;
 
 % Calculate parameters of centreline
-handles.data_table(:,1)=centreline_tort(fixed_xyz,handles.voxel_dim);
+handles.data_table(:,1)=centreline_tort_beta(fixed_xyz,handles.voxel_dim,handles.spacing);
 
 % Load data into table
 set(handles.tort_table,'Data',handles.data_table)
@@ -275,7 +276,7 @@ function open_files_pshbut_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Set current folder
-cd('C:\Users\Will\Desktop') 
+cd('C:\Users\Will\Documents\Tortuosity Bristol\aNTN') 
 [filename,pathname] = uigetfile('*.*','MultiSelect','on');
 
 ext = regexp(filename, '(?<=\.)\d+$', 'match', 'once');
@@ -296,6 +297,8 @@ handles.voxel_dim(1) = a.PixelSpacing(1);
 handles.voxel_dim(2) = a.PixelSpacing(2);
 handles.voxel_dim(3) = a.SliceThickness;
 handles.spacing      = a.SpacingBetweenSlices;
+
+assignin('base','spacing',handles.spacing)
 % Load data into array 'X'
 handles.data = zeros(handles.X_size,handles.Y_size,handles.Z_size);
 for n = 1:handles.Z_size
@@ -370,19 +373,26 @@ clearvars data_thresh mask
 % Plot ROI data points
  cla(handles.roi_axes)
 
-% Plot isosurface
+% Extract subvolume
 [xs,ys,zs,D] = subvolume(roi,...
             [handles.X_min,handles.X_max,...
             handles.Y_min,handles.Y_max,...
             handles.Z_min,handles.Z_max]); %Isolate subvolume
-
+% Label axes
 xlabel(handles.roi_axes,'x')
 ylabel(handles.roi_axes,'y')
 zlabel(handles.roi_axes,'z')
 axes(handles.roi_axes);
+
+% Convert into real voxel dimenisons [mm] (e.g. 0.375x0.375x1)
+%xs = xs*handles.voxel_dim(1);
+%ys = ys*handles.voxel_dim(2);
+%zs = zs*(handles.voxel_dim(3)+handles.spacing);
+
+% Plot extracted vessel
 patch(isosurface(xs,ys,zs,D),'FaceColor','red','EdgeColor','none','Parent',handles.roi_axes)
 view(handles.roi_axes,[-45,16])
-set(handles.roi_axes,'YTickLabel',[],'XTickLabel',[])
+% set(handles.roi_axes,'YTickLabel',[],'XTickLabel',[])
 grid on
 camlight
 lighting gouraud
@@ -711,7 +721,7 @@ e_m=mean(e_m);%ERROR AVERAGE
 handles.data_table(6,3)=e_m;
 
 % Calculate parameters of centreline
-handles.data_table(:,2)=centreline_tort(xyzsgpt,handles.voxel_dim);
+handles.data_table(:,2)=centreline_tort_beta(xyzsgpt,handles.voxel_dim,handles.spacing);
 
 % Error in DM
  handles.data_table(1,3) = handles.data_table(1,2)*e_m;
@@ -759,7 +769,7 @@ view([-39,6])
 fixed_xyz = [x,y,z];
 
 % Calculate centreline parameters
-handles.data_table(:,1)=centreline_tort(fixed_xyz,handles.voxel_dim);
+handles.data_table(:,1)=centreline_tort_beta(fixed_xyz,handles.voxel_dim,handles.spacing);
 
 set(handles.tort_table,'Data',handles.data_table)
 

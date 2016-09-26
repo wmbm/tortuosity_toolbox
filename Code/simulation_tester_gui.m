@@ -67,7 +67,10 @@ handles.n_range = 100;
 handles.vessel_type_num = 0;
 handles.xl = 0;
 handles.yl = 0;
-handles.voxel_dim=1*10^-3;
+% Values specific to experimental 
+handles.voxel_dimxy = 0.375*10^-3;
+handles.voxel_dimz = 1*10^-3;
+handles.spacing = 0.5*10^-3;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -131,9 +134,9 @@ sim_cent = zeros(size(x,2),3);
 sim_cent(:,1)=x;
 sim_cent(:,2)=y;
 sim_cent(:,3)=z;
-dim=handles.voxel_dim;
 
-handles.data_array(:,1) = centreline_tort_beta(sim_cent,[dim,dim,dim]);
+handles.data_array(:,1) = centreline_tort_beta(sim_cent,[handles.voxel_dimxy, ...
+    handles.voxel_dimxy,handles.voxel_dimz],handles.spacing);
 assignin('base','d',handles.data_array(5))
 assignin('base','centre',sim_cent)
 set(handles.tort_table_edit,'Data',handles.data_array)
@@ -478,35 +481,51 @@ elseif str2double(selected(1)) == 2
 %------------------
 % Number of Points
 %------------------
+% number of points parameter here gives us number of steps 
+% e.g. 1 point:200 points in 100 steps
+elseif str2double(selected(1)) == 3
+    v = zeros(handles.n_range,handles.max_range);
+    for n = 1:handles.max_range
+        v(n,1:n)= linspace(0,1,n);
+    end
 
-% elseif str2double(selected(1)) == 3 
-%     if handles.vessel_type_num == 1 % Straight
-%         x = A*ones(1,range);
-%         y = A*ones(1,range);
-%         z = v*handles.length;
-%         for n=1:handles.n_range;
-%         line(n,:,1)=x;
-%         line(n,:,2)=y;
-%         line(n,:,3)=z;
-%         end
-%     elseif handles.vessel_type_num == 2 % Sine
-%         % Cell array to store arrays of different sizes
-%         v_stor = cell(1,handles.n_range); 
-%         % Different sized v arrays
-%         v_stor(:,:)=linspace(0,1,range);
-%         x=A*sin(2*pi*v_stor*handles.freq);
-%         y=ones(1,handles.num);
-%         z=v*handles.length;
-%     elseif handles.vessel_type_num == 3 % Coil
-%         x=A*cos(2*pi*v*handles.freq);
-%         y=A*sin(2*pi*v*handles.freq);
-%         z=v*handles.length;
-%     elseif handles.vessel_type_num == 4 % Highly Coiled
-%          x=A*cos(2*pi*v*handles.freq);
-%          y=A*sin(2*pi*v*handles.freq)+A*cos(5*pi*v*handles.freq);
-%          z=v*handles.length;
-%     end
-
+    if handles.vessel_type_num == 1 % Straight
+        x = A*v;
+        y = A*v;
+        z = v*handles.length;
+        for n=1:handles.max_range;
+            line(n,1:n,1)=x(n,1:n);
+            line(n,1:n,2)=y(n,1:n);
+            line(n,1:n,3)=z(n,1:n);
+        end
+    elseif handles.vessel_type_num == 2 % Sine
+        x=A*sin(2*pi*v*handles.freq);
+        y=A*v;
+        z=v*handles.length;
+        for n=1:handles.max_range;
+            line(n,1:n,1)=x(n,1:n);
+            line(n,1:n,2)=y(n,1:n);
+            line(n,1:n,3)=z(n,1:n);
+        end
+    elseif handles.vessel_type_num == 3 % Coil
+        x=A*cos(2*pi*v*handles.freq);
+        y=A*sin(2*pi*v*handles.freq);
+        z=v*handles.length;
+        for n=1:handles.max_range;
+            line(n,1:n,1)=x(n,1:n);
+            line(n,1:n,2)=y(n,1:n);
+            line(n,1:n,3)=z(n,1:n);
+        end
+    elseif handles.vessel_type_num == 4 % Highly Coiled
+         x=A*cos(2*pi*v*handles.freq);
+         y=A*sin(2*pi*v*handles.freq)+A*cos(5*pi*v*handles.freq);
+         z=v*handles.length;
+         for n=1:handles.max_range;
+            line(n,1:n,1)=x(n,1:n);
+            line(n,1:n,2)=y(n,1:n);
+            line(n,1:n,3)=z(n,1:n);
+         end
+    end
 
 
 % --------
@@ -557,17 +576,30 @@ elseif str2double(selected(1)) == 4
 end
 
 
-% voxel dimensions set to 1
-dim = handles.voxel_dim;
+assignin('base','line',line)
 
 % Calculate metrics for ranged centreline
 data_values = zeros(handles.n_range,7);
-for n = 1:handles.n_range
-    data_values(n,:) = centreline_tort_beta(squeeze(line(n,:,:)),[dim,dim,dim]);
+if str2double(selected(1)) == 3 % If number of points paramater test
+    for nop = 2:handles.n_range
+        data_values(nop,:) = centreline_tort_beta(squeeze(line(1:nop,1:nop,:)),[handles.voxel_dimxy, ...
+            handles.voxel_dimxy,handles.voxel_dimz],handles.spacing);
+    end
+    data_values(isnan(data_values)) = 0;
+    data_values(isinf(data_values)) = 0;
+else 
+    for n = 1:handles.n_range
+        data_values(n,:) = centreline_tort_beta(squeeze(line(n,:,:)),[handles.voxel_dimxy, ...
+            handles.voxel_dimxy,handles.voxel_dimz],handles.spacing);
+    end
 end
 
 % Axes of ranged modulation
 axes_dat = linspace(handles.min_range,handles.max_range,handles.n_range);
+
+assignin('base','data',data_values)
+
+
 
 % Calculate errors in values
 [fitobject1,gof1]=fit(axes_dat',squeeze(data_values(:,1)),'smoothingspline'); %#ok<ASGLU>
@@ -589,12 +621,13 @@ handles.data_array(7,2)=gof7.rmse;
 set(handles.tort_table_edit,'Data',handles.data_array)
 
 % Plot data
+set(handles.range_fig, 'YLim',[0, round(max(max(data_values)))])
 hold(handles.range_fig, 'on' )
-plot(axes_dat,data_values(:,1),'Parent',handles.range_fig,'Color','r','Marker','x','LineStyle','none')
-plot(axes_dat,data_values(:,2),'Parent',handles.range_fig,'Color','b','Marker','x','LineStyle','none')
-plot(axes_dat,data_values(:,3),'Parent',handles.range_fig,'Color','g','Marker','x','LineStyle','none')
-plot(axes_dat,data_values(:,4),'Parent',handles.range_fig,'Color','k','Marker','x','LineStyle','none')
-plot(axes_dat,data_values(:,6),'Parent',handles.range_fig,'Color','y','Marker','x','LineStyle','none')
+plot(axes_dat,data_values(:,1),'Parent',handles.range_fig,'Color','r','Marker','+','LineStyle','none')
+plot(axes_dat,data_values(:,2),'Parent',handles.range_fig,'Color','b','Marker','*','LineStyle','none')
+plot(axes_dat,data_values(:,3),'Parent',handles.range_fig,'Color','g','Marker','o','LineStyle','none')
+plot(axes_dat,data_values(:,4),'Parent',handles.range_fig,'Color','k','Marker','s','LineStyle','none')
+plot(axes_dat,data_values(:,6),'Parent',handles.range_fig,'Color','y','Marker','d','LineStyle','none')
 plot(axes_dat,data_values(:,7),'Parent',handles.range_fig,'Color','m','Marker','x','LineStyle','none')
 hold(handles.range_fig,'off')
 legend(handles.range_fig,'DM','SOAM','ICMn','ICMb','StdAvdK','NormK');
@@ -653,7 +686,10 @@ function y_slid_Callback(hObject, ~, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+set(hObject,'Max',100)
+set(hObject,'Min',0)
 y_max = get(hObject,'Value');
+
 ylim(handles.range_fig, [0,y_max]);
 
 guidata(hObject, handles)

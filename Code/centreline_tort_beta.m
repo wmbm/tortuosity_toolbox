@@ -1,4 +1,4 @@
-function [ data_array ] = centreline_tort_beta( centreline_data, voxel_dim )
+function [ data_array ] = centreline_tort_beta( centreline_data, voxel_dim, spacing )
 % Description
 % -----------
 % This file contains all of the quantification methods used in the
@@ -7,8 +7,8 @@ function [ data_array ] = centreline_tort_beta( centreline_data, voxel_dim )
 % Variables
 % ---------
 % centreline_data - centreline data [n,3] 3->[x,y,z]
-% voxel_dim       - dimensions of voxel [cm]
-% 
+% voxel_dim       - [x,y,z] dimensions of voxel [metres]
+% spacing         - spacing between slices [metres]
 % Returns
 % ---------
 % data_array      - array containing all calculated variables
@@ -17,8 +17,8 @@ function [ data_array ] = centreline_tort_beta( centreline_data, voxel_dim )
 % data_array(3)   - inflection count metric (normal)
 % data_array(4)   - inflection count metric (binomial)
 % data_array(5)   - length of centreline
-% data_array(6)   - TBA
-% data_array(7)   - TBA
+% data_array(6)   - standard deviation of average curvature
+% data_array(7)   - norm of curvature
 
 %---------------------------------------------------------
 % Initial Processing
@@ -32,10 +32,10 @@ data_table = zeros(1,7);
 % multiply centreline dimensions by voxel dimensions
 data_xyz(:,1)=data_xyz(:,1)*voxel_dim(1);
 data_xyz(:,2)=data_xyz(:,2)*voxel_dim(2);
-data_xyz(:,3)=data_xyz(:,3)*voxel_dim(3);
+data_xyz(:,3)=data_xyz(:,3)*(voxel_dim(3)+spacing);
 
 %---------------------------------------------------------
-% Length of Centreline
+% Length of Centreline [mm]
 %---------------------------------------------------------
 d = 0;
 for v = 1:size(data_xyz,1)-1
@@ -43,10 +43,10 @@ for v = 1:size(data_xyz,1)-1
              (data_xyz(v+1,2)-data_xyz(v,2))^2 + ...
              (data_xyz(v+1,3)-data_xyz(v,3))^2 )^0.5;
 end
-data_table(5) = d;
+data_table(5) = d*10^3;
 
 %---------------------------------------------------------
-%Distance Metric
+% Distance Metric
 %---------------------------------------------------------
 start_end = [data_xyz(end-1,1)-data_xyz(1,1),...
              data_xyz(end-1,2)-data_xyz(1,2),...
@@ -55,73 +55,70 @@ length_start_end = (start_end(1)^2 + start_end(2)^2 + start_end(3)^2 )^0.5;
 data_table(1)= d/length_start_end;
 
 %----------------------------------------------------------
-%Inflection Count Metric [t-tangent, n-normal, b-binomial]
+% Inflection Count Metric [t-tangent, n-normal, b-binomial]
 %----------------------------------------------------------
+P=data_xyz;
+% Calculate frenet frame of centreline
 [~,n,b]=frenet(data_xyz(:,1),data_xyz(:,2),data_xyz(:,3));
 IC_n = 0;
 IC_b = 0;
-for i = 1:size(n,1)-2
-    %Check if accellerator vector is too small [Bullitt]
-    T1 = data_xyz(i+1,:) - data_xyz(i,:);
-    T2 = data_xyz(i+2,:) - data_xyz(i+1,:);
-    A=T2-T1;
-    if norm(A)<10^-5 % in [mm]
+for i = 2:size(n,1)-1
+    
+    % First check if accellerator vector is too small [Bullitt]
+    T1 = P(i,:) - P(i-1,:);
+    T2 = P(i+1,:) - P(i,:);
+    A=T2-T1; % Acceleration vector
+    if norm(A)<10^-5 % in [mm]???
         continue
     end
-    del_n = n(i+1,:)-n(i,:);
-    del_b = b(i+1,:)-b(i,:);
+    
+    % Calculate inflection count (del_ : change in axis)
+    del_n = n(i,:)-n(i-1,:);
+    del_b = b(i,:)-b(i-1,:);
     local_max_n = dot(del_n,del_n);
     local_max_b = dot(del_b,del_b);
-    if local_max_n > 1
+    
+    if local_max_n > 1 % normal axis maxima
         IC_n = IC_n + 1;
     end
-    if local_max_b > 1
+    if local_max_b > 1 %binomial axis maxima
         IC_b = IC_b + 1;
     end
 end
-data_table(3)= (IC_n+1)*(d/length_start_end)/10;
-data_table(4)= (IC_b+1)*(d/length_start_end)/10;
+data_table(3)= (IC_n+1)*(d/length_start_end);
+data_table(4)= (IC_b+1)*(d/length_start_end);
 
 %---------------------------------------------------------------
-% Sum Of Angles Metric [SOAM]
+% Sum Of Angles Metric [SOAM] UNITS: radians/cm
 %---------------------------------------------------------------
 n = size(data_xyz,1);
 CP = zeros(1,n);
+P = data_xyz; % Convert into cm
 % Consecutive 3 points on centreline
 for k = 2:n-3
     % Calculate total angle from in-plane angle and torsion angle
-    T1 = data_xyz(k,:) - data_xyz(k-1,:);
-    T2 = data_xyz(k+1,:) - data_xyz(k,:);
-    T3 = data_xyz(k+2,:) - data_xyz(k+1,:);
+    
+    % Initial difference vectors
+    T1 = P(k,:) - P(k-1,:);
+    T2 = P(k+1,:) - P(k,:);
     
     % In-plane angle
-    IPA = acos(dot(T1/norm(T1),T2/norm(T2)));
+    IP = acos(dot(T1/norm(T1),T2/norm(T2)));
     
-    % Torsion angle
-    cross_mag_T12 = cross(T1,T2);
-    cross_mag_T12 = sqrt(cross_mag_T12(1)^2 + cross_mag_T12(2)^2 + cross_mag_T12(3)^2);
-    cross_mag_T23 = cross(T2,T3);
-    cross_mag_T23 = sqrt(cross_mag_T23(1)^2 + cross_mag_T23(2)^2 + cross_mag_T23(3)^2);
-    a=abs(cross(T1,T2))/abs(cross_mag_T12);
-    b=abs(cross(T2,T3))/abs(cross_mag_T23);
-    TPA = acos(dot(a,b));  %#ok<NASGU>
-    TPA = 0; % Ignore torsion angle
+    % Torsion angle ignored as recommended by Bullitt
+    % Only introduced noise in previous studies
     
     % Total angle
-    CP(k) = sqrt((IPA^2)+(TPA^2));
+    CP(k) = sqrt((IP^2));
 end
 
 % Remove NaNs
-CP_NaN = CP;
-CP_NaN(isnan(CP_NaN)) = 0;
-fixed_NaN = data_xyz;
+CP(isnan(CP)) = 0;
 
 % Sum of Angles Metric Equation
-n = size(fixed_NaN,1);
-a = CP_NaN(1:(n-3));
-b = norm(fixed_NaN(2:n,:)-fixed_NaN(1:n-1,:));
-SOAM = sum(a)/(sum(b)); 
-data_table(2) = real(SOAM)/1000;
+n = size(P,1);
+SOAM = sum(CP(1:(n-3)))/(sum(norm(P(2:n,:)-P(1:n-1,:)))); 
+data_table(2) = real(SOAM)*(pi/180); %convert into radians / mm
 
 %---------------------------------------------------------------
 % Standard deviation of curvature [SDOC]
@@ -144,8 +141,8 @@ data_table(6)= k_sd;
 %------------------------------------------------------------
 % Norm of Curvature
 %------------------------------------------------------------
-
-data_table(7) = norm(k)/1000;
+dS = 0.262*10^-3; % played with parameter
+data_table(7) = norm(k,1)*dS;
 
 % Load data into array
 data_array=data_table;

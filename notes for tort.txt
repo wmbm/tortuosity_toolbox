@@ -1,0 +1,67 @@
+SIMULATION TOOLBOX NOTES
+------------------------
+
+Straight line 
+-------------
+Minimum points 5 before stable
+Length doesn't work....
+
+
+Sinusoidal
+------------
+Frequency :
+DM - Linear
+SOAM - Not great, reaches plateu beyond which only slight change
+ICMn - Matches ICMb until about 8, and then linear curve, over 8 linear
+ICMb - Near exponential increase, near linear up to 20
+NormK & StdAvgK - match both linear
+
+Amplitude : 
+RELEVANCE?
+
+
+0.375x0.375x1 with 0.5 spacing
+
+VESSEL SIZES
+------------
+Arterioles : 20-30 um
+DIAMETER
+Basilar artery 3.17mm
+Typical basilar amplitude (tested) 7.5mm
+
+
+SCALABILITY TESTING
+-------------------
+Scalabilty of the tortuosity metrics seems to be paramount to 
+the anaylsis I need to go through all the code and consider the 
+dimensions being used and whether they're relevant and what 
+units they're in, and what units they should be in. 
+
+centreline_tort_beta (Inputs are centreline and dimension units)
+ALWAYS KEEP IN SI UNITS HERE.... i.e. metres
+
+Ensure units are ONLY considered in this function, to simplify.
+
+VOXEL DIMENSIONs of actual data are only added afterwards....we 
+want to obtain the "PHYSICAL" tortuosity value, that means applying
+the metrics to a centreline that most closely matches the brain.
+
+Then again, if the method (avoiding voxem dimension multiplication)
+yields more reliable metrics then we could question the method.
+
+For now, lets focus on physical tortuosity quantification, not in
+some abstract scaled space.
+
+So now the simulated centreline should be accurate....
+
+The VITAL question is... What is the relevant parameter space:
+What is the expected range of amplitudes....
+What is the expected range of frequency etc.
+Once I answer this, the data I get from the tester toolbox will 
+be more relevant because at the moment it's just tonnes of data.
+
+- WHAT IS A GOOD METRIC?
+- WHAT IS THE PARAMETER SCALES OF THE VESSELS?
+
+
+
