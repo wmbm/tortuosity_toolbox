@@ -8,7 +8,7 @@ The toolbox was developed in collaboration with CRIC at Bristol University under
 
 1. The vessel extraction and measurement tool
 
-![Tool1](./Tortuosity%20Paper%20Images/Figure_1.jpg)
+![Tool1](./Tortuosity%20Paper%20Images/Figure_2.jpg)
 
 2. The simulated vessel metric validation tool:
 
