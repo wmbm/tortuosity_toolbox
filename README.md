@@ -4,6 +4,6 @@ A collection of code developed with the purpose to quantify the tortuosity ("ben
 
 The toolbox was developed in collaboration with CRIC at Bristol University under the supervision of Dr. Emma Hart.
 
-!(Tool)[Tortuosity Paper Images/Figure_4.jpg]
+!(Tool)["Tortuosity Paper Images/Figure_4.jpg"]
 
 For an overview of the toolbox, you can view the walthough mp4 video.
