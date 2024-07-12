@@ -1,8 +1,6 @@
 # Matlab Toolbox for the Quantification of Cerebral Tortuosity
 
-A collection of code developed with the purpose to quantify the tortuosity ("bendiness") of cerebral blood vessels towards better understanding of age-related strokes.
-
-The toolbox was developed in collaboration with CRIC at Bristol University under the supervision of Dr. Emma Hart.
+The purpose of this project was to develop a tool to quantify the tortuosity ("bendiness") of cerebral blood vessels towards better understanding of age-related stroke. Various metrics exist in the literature, however no unified testing tool was built to validated and compare across research studies. 
 
 ## Components
 
@@ -14,4 +12,8 @@ The toolbox was developed in collaboration with CRIC at Bristol University under
 
 ![Tool](./Tortuosity%20Paper%20Images/Figure_4.jpg)
 
-For an overview of the toolbox, you can view the walthough mp4 video.
+For an overview of the toolbox, you can view the [walthough mp4 video](https://github.com/wmbm/tortuosity_toolbox/blob/master/Tortuosity_toolbox_walkthrough.mp4).
+
+## Credits
+
+The toolbox was developed in collaboration with CRIC at Bristol University under the supervision of Dr. Emma Hart.
