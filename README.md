@@ -44,11 +44,11 @@ Note 2: Deviation from the above flow of the code may result in bugs, which can 
 
 1. The vessel extraction and measurement tool
 
-![Tool1](./Tortuosity%20Paper%20Images/Figure_2.jpg)
+![Tool1](.outputs/Tortuosity%20Paper%20Images/Figure_2.jpg)
 
 2. The simulated vessel metric validation tool:
 
-![Tool](./Tortuosity%20Paper%20Images/Figure_4.jpg)
+![Tool](.outputs/Tortuosity%20Paper%20Images/Figure_4.jpg)
 
 For an overview of the toolbox, you can view the [walthough mp4 video](https://youtu.be/z_a9z4SmE-A).
 
