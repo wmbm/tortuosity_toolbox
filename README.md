@@ -12,7 +12,7 @@ The purpose of this project was to develop a tool to quantify the tortuosity ("b
 
 ![Tool](./Tortuosity%20Paper%20Images/Figure_4.jpg)
 
-For an overview of the toolbox, you can view the [walthough mp4 video](https://github.com/wmbm/tortuosity_toolbox/blob/master/Tortuosity_toolbox_walkthrough.mp4).
+For an overview of the toolbox, you can view the [walthough mp4 video](https://youtu.be/z_a9z4SmE-A).
 
 ## Credits
 
