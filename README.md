@@ -1,8 +1,13 @@
 # Matlab Toolbox for the Quantification of Cerebrovascular Tortuosity (TQTV)
 
-(This was a graduate internship project with Bristol University in 2015)
+(Legacy code - This was a graduate internship project with Bristol University in 2015)
 
 The purpose of this project was to develop a tool to quantify the tortuosity ("bendiness") of cerebral blood vessels towards better understanding of age-related stroke. Various metrics exist in the literature, however no unified testing tool was built to validated and compare across research studies. 
+
+### Highlights
+- Open-source cerebrovascular tortuosity quantification tool developed.
+- Validated with simulated blood vessels and additional parameter exploration toolbox.
+- Tested in hypertensive and normal-tensive human subjects.
 
 ## Step-by-Step Guide
 
